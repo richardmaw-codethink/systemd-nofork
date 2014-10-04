@@ -113,6 +113,7 @@ kernelinstalldir = $(prefix)/lib/kernel/install.d
 factory_etcdir = $(datadir)/factory/etc
 factory_pamdir = $(datadir)/factory/etc/pam.d
 bootlibdir = $(prefix)/lib/systemd/boot/efi
+ntpunitsdir=$(prefix)/lib/systemd/ntp-units.d
 
 # And these are the special ones for /
 rootprefix=@rootprefix@
@@ -5288,6 +5289,10 @@ dist_systemunit_DATA_busnames += \
 polkitpolicy_files += \
 	src/timedate/org.freedesktop.timedate1.policy
 
+INSTALL_DIRS += \
+	$(prefix)/lib/systemd/ntp-units.d \
+	$(sysconfdir)/systemd/ntp-units.d
+
 SYSTEM_UNIT_ALIASES += \
 	systemd-timedated.service dbus-org.freedesktop.timedate1.service
 
@@ -5358,6 +5363,13 @@ nodist_pkgsysconf_DATA += \
 
 EXTRA_DIST += \
 	src/timesync/timesyncd.conf.in
+
+CLEANFILES += \
+	src/timesync/timesyncd.conf
+
+dist_ntpunits_DATA = \
+	src/timesync/90-systemd.list
+
 endif
 
 # ------------------------------------------------------------------------------
