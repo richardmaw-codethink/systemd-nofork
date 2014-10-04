@@ -10,9 +10,6 @@
 L /etc/os-release - - - - ../usr/lib/os-release
 L /etc/localtime - - - - ../usr/share/zoneinfo/UTC
 L+ /etc/mtab - - - - ../proc/self/mounts
-m4_ifdef(`ENABLE_RESOLVED',
-L! /etc/resolv.conf - - - - ../run/systemd/resolve/resolv.conf
-)m4_dnl
 C /etc/nsswitch.conf - - - -
 m4_ifdef(`HAVE_PAM',
 C /etc/pam.d - - - -
