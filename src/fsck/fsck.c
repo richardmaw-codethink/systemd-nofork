@@ -420,8 +420,9 @@ int main(int argc, char *argv[]) {
                  * Since util-linux v2.25 fsck uses /run/fsck/<diskname>.lock files.
                  * The previous versions use flock for the device and conflict with
                  * udevd, see https://bugs.freedesktop.org/show_bug.cgi?id=79576#c5
+                 *
+                 * cmdline[i++] = "-l";
                  */
-                cmdline[i++] = "-l";
 
                 if (!root_directory)
                         cmdline[i++] = "-M";
