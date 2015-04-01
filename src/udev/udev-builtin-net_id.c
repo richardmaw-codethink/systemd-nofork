@@ -199,7 +199,7 @@ static int dev_pci_slot(struct udev_device *dev, struct netnames *names) {
         if (sscanf(udev_device_get_sysname(names->pcidev), "%x:%x:%x.%u", &domain, &bus, &slot, &func) != 4)
                 return -ENOENT;
 
-        /* kernel provided multi-device index */
+        /* kernel provided port index for multiple ports on a single PCI function */
         attr = udev_device_get_sysattr_value(dev, "dev_id");
         if (attr) {
                 dev_id = strtol(attr, NULL, 16);
