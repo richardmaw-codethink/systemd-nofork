@@ -3756,7 +3756,8 @@ dist_udevrules_DATA += \
 	rules/78-sound-card.rules \
 	rules/80-net-setup-link.rules \
 	rules/40-redhat.rules \
-	rules/73-idrac.rules
+	rules/73-idrac.rules \
+        rules/80-net-name-slot.rules
 
 nodist_udevrules_DATA += \
 	rules/99-systemd.rules
