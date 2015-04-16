@@ -10,7 +10,3 @@
 L /etc/os-release - - - - ../usr/lib/os-release
 L /etc/localtime - - - - ../usr/share/zoneinfo/UTC
 L+ /etc/mtab - - - - ../proc/self/mounts
-C /etc/nsswitch.conf - - - -
-m4_ifdef(`HAVE_PAM',
-C /etc/pam.d - - - -
-)m4_dnl
