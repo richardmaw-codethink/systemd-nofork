@@ -1354,6 +1354,70 @@ static int method_switch_root(sd_bus_message *message, void *userdata, sd_bus_er
         return sd_bus_reply_method_return(message, NULL);
 }
 
+static int method_upgrade_root(sd_bus_message *message, void *userdata, sd_bus_error *error) {
+        char *ri = NULL, *rt = NULL;
+        const char *root, *init;
+        Manager *m = userdata;
+        int r;
+
+        assert(message);
+        assert(m);
+
+        r = mac_selinux_access_check(message, "reboot", error);
+        if (r < 0)
+                return r;
+
+        if (m->running_as != MANAGER_SYSTEM)
+                return sd_bus_error_setf(error, SD_BUS_ERROR_NOT_SUPPORTED, "Root switching is only supported by system manager.");
+
+        r = sd_bus_message_read(message, "ss", &root, &init);
+        if (r < 0)
+                return r;
+
+        if (path_equal(root, "/") || !path_is_absolute(root))
+                return sd_bus_error_setf(error, SD_BUS_ERROR_INVALID_ARGS, "Invalid switch root path %s", root);
+
+        /* Safety check */
+        if (isempty(init)) {
+                if (!path_is_os_tree(root))
+                        return sd_bus_error_setf(error, SD_BUS_ERROR_INVALID_ARGS, "Specified switch root path %s does not seem to be an OS tree. os-release file is missing.", root);
+        } else {
+                _cleanup_free_ char *p = NULL;
+
+                if (!path_is_absolute(init))
+                        return sd_bus_error_setf(error, SD_BUS_ERROR_INVALID_ARGS, "Invalid init path %s", init);
+
+                p = strappend(root, init);
+                if (!p)
+                        return -ENOMEM;
+
+                if (access(p, X_OK) < 0)
+                        return sd_bus_error_setf(error, SD_BUS_ERROR_INVALID_ARGS, "Specified init binary %s does not exist.", p);
+        }
+
+        rt = strdup(root);
+        if (!rt)
+                return -ENOMEM;
+
+        if (!isempty(init)) {
+                ri = strdup(init);
+                if (!ri) {
+                        free(rt);
+                        return -ENOMEM;
+                }
+        }
+
+        free(m->switch_root);
+        m->switch_root = rt;
+
+        free(m->switch_root_init);
+        m->switch_root_init = ri;
+
+        m->exit_code = MANAGER_UPGRADE_ROOT;
+
+        return sd_bus_reply_method_return(message, NULL);
+}
+
 static int method_set_environment(sd_bus_message *message, void *userdata, sd_bus_error *error) {
         _cleanup_strv_free_ char **plus = NULL;
         Manager *m = userdata;
@@ -1990,6 +2054,7 @@ const sd_bus_vtable bus_manager_vtable[] = {
         SD_BUS_METHOD("Halt", NULL, NULL, method_halt, SD_BUS_VTABLE_CAPABILITY(CAP_SYS_BOOT)),
         SD_BUS_METHOD("KExec", NULL, NULL, method_kexec, SD_BUS_VTABLE_CAPABILITY(CAP_SYS_BOOT)),
         SD_BUS_METHOD("SwitchRoot", "ss", NULL, method_switch_root, SD_BUS_VTABLE_CAPABILITY(CAP_SYS_BOOT)),
+        SD_BUS_METHOD("UpgradeRoot", "ss", NULL, method_upgrade_root, SD_BUS_VTABLE_CAPABILITY(CAP_SYS_BOOT)),
         SD_BUS_METHOD("SetEnvironment", "as", NULL, method_set_environment, SD_BUS_VTABLE_UNPRIVILEGED),
         SD_BUS_METHOD("UnsetEnvironment", "as", NULL, method_unset_environment, SD_BUS_VTABLE_UNPRIVILEGED),
         SD_BUS_METHOD("UnsetAndSetEnvironment", "asas", NULL, method_unset_and_set_environment, SD_BUS_VTABLE_UNPRIVILEGED),

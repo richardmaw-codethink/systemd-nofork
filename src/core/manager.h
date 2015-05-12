@@ -58,6 +58,7 @@ typedef enum ManagerExitCode {
         MANAGER_HALT,
         MANAGER_KEXEC,
         MANAGER_SWITCH_ROOT,
+        MANAGER_UPGRADE_ROOT,
         _MANAGER_EXIT_CODE_MAX,
         _MANAGER_EXIT_CODE_INVALID = -1
 } ManagerExitCode;

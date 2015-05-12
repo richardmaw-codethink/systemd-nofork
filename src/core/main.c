@@ -1227,6 +1227,7 @@ int main(int argc, char *argv[]) {
         bool queue_default_job = false;
         bool empty_etc = false;
         char *switch_root_dir = NULL, *switch_root_init = NULL;
+        bool keep_processes = false;
         struct rlimit saved_rlimit_nofile = RLIMIT_MAKE_CONST(0);
         const char *error_message = NULL;
 
@@ -1795,6 +1796,22 @@ int main(int argc, char *argv[]) {
                         log_notice("Switching root.");
                         goto finish;
 
+                case MANAGER_UPGRADE_ROOT:
+                        /* Steal the switch root parameters */
+                        switch_root_dir = m->switch_root;
+                        switch_root_init = m->switch_root_init;
+                        m->switch_root = m->switch_root_init = NULL;
+
+                        if (prepare_reexecute(m, &arg_serialization, &fds, true) < 0) {
+                                error_message = "Failed to prepare for reexection";
+                                goto finish;
+                        }
+
+                        reexecute = true;
+                        keep_processes = true;
+                        log_notice("Switching root.");
+                        goto finish;
+
                 case MANAGER_REBOOT:
                 case MANAGER_POWEROFF:
                 case MANAGER_HALT:
@@ -1858,7 +1875,7 @@ finish:
                 if (saved_rlimit_nofile.rlim_cur > 0)
                         setrlimit(RLIMIT_NOFILE, &saved_rlimit_nofile);
 
-                if (switch_root_dir) {
+                if (switch_root_dir && !keep_processes) {
                         /* Kill all remaining processes from the
                          * initrd, but don't wait for them, so that we
                          * can handle the SIGCHLD for them after
@@ -1869,18 +1886,25 @@ finish:
                         r = switch_root(switch_root_dir, "/mnt", true, MS_MOVE);
                         if (r < 0)
                                 log_error_errno(r, "Failed to switch root, trying to continue: %m");
+                } else if (keep_processes) {
+                        /* And switch root with MS_BIND, because we need to
+                         * leave the old root around for the existing processes
+                         * to run in */
+                        r = switch_root(switch_root_dir, "/mnt", false, MS_BIND);
+                        if (r < 0)
+                                log_error_errno(r, "Failed to upgrade root, trying to continue: %m");
                 }
 
                 args_size = MAX(6, argc+1);
                 args = newa(const char*, args_size);
 
-                if (!switch_root_init) {
+                if (!switch_root_init || keep_processes) {
                         char sfd[DECIMAL_STR_MAX(int) + 1];
 
                         /* First try to spawn ourselves with the right
                          * path, and with full serialization. We do
                          * this only if the user didn't specify an
-                         * explicit init to spawn. */
+                         * explicit init to spawn, or they ran upgrade-root */
 
                         assert(arg_serialization);
                         assert(fds);
@@ -1888,7 +1912,7 @@ finish:
                         xsprintf(sfd, "%i", fileno(arg_serialization));
 
                         i = 0;
-                        args[i++] = SYSTEMD_BINARY_PATH;
+                        args[i++] = switch_root_init?: SYSTEMD_BINARY_PATH;
                         if (switch_root_dir)
                                 args[i++] = "--switched-root";
                         args[i++] = arg_running_as == MANAGER_SYSTEM ? "--system" : "--user";
