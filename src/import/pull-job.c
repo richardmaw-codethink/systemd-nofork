@@ -464,6 +464,7 @@ fail:
         return 0;
 }
 
+#if HAVE_DECL_CURLOPT_XFERINFOFUNCTION && HAVE_DECL_CURLOPT_XFERINFODATA
 static int pull_job_progress_callback(void *userdata, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
         PullJob *j = userdata;
         unsigned percent;
@@ -506,6 +507,7 @@ static int pull_job_progress_callback(void *userdata, curl_off_t dltotal, curl_o
 
         return 0;
 }
+#endif
 
 int pull_job_new(PullJob **ret, const char *url, CurlGlue *glue, void *userdata) {
         _cleanup_(pull_job_unrefp) PullJob *j = NULL;
@@ -594,11 +596,13 @@ int pull_job_begin(PullJob *j) {
         if (curl_easy_setopt(j->curl, CURLOPT_HEADERDATA, j) != CURLE_OK)
                 return -EIO;
 
+#if HAVE_DECL_CURLOPT_XFERINFOFUNCTION && HAVE_DECL_CURLOPT_XFERINFODATA
         if (curl_easy_setopt(j->curl, CURLOPT_XFERINFOFUNCTION, pull_job_progress_callback) != CURLE_OK)
                 return -EIO;
 
         if (curl_easy_setopt(j->curl, CURLOPT_XFERINFODATA, j) != CURLE_OK)
                 return -EIO;
+#endif
 
         if (curl_easy_setopt(j->curl, CURLOPT_NOPROGRESS, 0) != CURLE_OK)
                 return -EIO;

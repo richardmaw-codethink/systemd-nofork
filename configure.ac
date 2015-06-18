@@ -898,6 +898,11 @@ if test "x$enable_libcurl" != "xno"; then
 fi
 AM_CONDITIONAL(HAVE_LIBCURL, [test "$have_libcurl" = "yes"])
 
+AC_CHECK_DECLS([CURLOPT_XFERINFOFUNCTION, CURLOPT_XFERINFODATA],
+               [], [], [[
+#include <curl/curl.h>
+]])
+
 # ------------------------------------------------------------------------------
 have_libidn=no
 AC_ARG_ENABLE(libidn, AS_HELP_STRING([--disable-libidn], [Disable optional LIBIDN support]))
