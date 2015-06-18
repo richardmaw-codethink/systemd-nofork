@@ -852,7 +852,7 @@ AM_CONDITIONAL(HAVE_GNUTLS, [test "$have_gnutls" = "yes"])
 have_libcurl=no
 AC_ARG_ENABLE(libcurl, AS_HELP_STRING([--disable-libcurl], [disable libcurl support]))
 if test "x$enable_libcurl" != "xno"; then
-        PKG_CHECK_MODULES(LIBCURL, [libcurl],
+        PKG_CHECK_MODULES(LIBCURL, [libcurl >= 7.32.0],
                 [AC_DEFINE(HAVE_LIBCURL, 1, [Define if libcurl is available]) have_libcurl=yes], have_libcurl=no)
         if test "x$have_libcurl" = xno -a "x$enable_libcurl" = xyes; then
                 AC_MSG_ERROR([*** libcurl support requested but libraries not found])
