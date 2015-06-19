@@ -5167,8 +5167,11 @@ int unquote_first_word(const char **p, char **ret, UnquoteFlags flags) {
         } state = START;
 
         assert(p);
-        assert(*p);
         assert(ret);
+
+        /* Bail early if called after last value or with no input */
+        if (!*p)
+                goto finish;
 
         /* Parses the first word of a string, and returns it in
          * *ret. Removes all quotes in the process. When parsing fails
@@ -5309,6 +5312,7 @@ end_escape:
 
 finish:
         if (!s) {
+                *p = NULL;
                 *ret = NULL;
                 return 0;
         }
