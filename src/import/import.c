@@ -243,6 +243,7 @@ static int help(int argc, char *argv[], void *userdata) {
                "Commands:\n"
                "  tar FILE [NAME]             Import a TAR image\n"
                "  raw FILE [NAME]             Import a RAW image\n",
+               "  dkr FILE [NAME]             Import a DKR image\n",
                program_invocation_short_name);
 
         return 0;
@@ -311,6 +312,7 @@ static int import_main(int argc, char *argv[]) {
                 { "help", VERB_ANY, VERB_ANY, 0, help       },
                 { "tar",  2,        3,        0, import_tar },
                 { "raw",  2,        3,        0, import_raw },
+                { "dkr",  2,        3,        0, import_dkr },
                 {}
         };
 
